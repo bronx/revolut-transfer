@@ -1,6 +1,6 @@
 package com.revolut.transfer.api
 
-import com.revolut.transfer.util.ErrorCategory
+import com.revolut.transfer.util.ErrorCategory.*
 import com.revolut.transfer.util.Outcome
 import io.javalin.http.Context
 
@@ -12,7 +12,9 @@ fun resolveOutcome(outcome: Outcome<out Any>, context: Context) {
         is Outcome.Created -> context.status(201).json(outcome.value)
         is Outcome.Success -> context.json(outcome.value)
         is Outcome.Error -> when(outcome.category) {
-            ErrorCategory.DATA_NOT_FOUND -> context.status(404).json(Error("Not found"))
+            DATA_NOT_FOUND -> context.status(404).json(APIError(outcome.message))
+            INVALID_DATA -> context.status(400).json(APIError(outcome.message))
+            UNKNOWN_ERROR -> context.status(500).json(APIError(outcome.message))
         }
     }
 }

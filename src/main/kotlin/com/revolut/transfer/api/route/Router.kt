@@ -2,8 +2,10 @@ package com.revolut.transfer.api.route
 
 import com.revolut.transfer.api.APIError
 import com.revolut.transfer.api.controller.AccountController
+import com.revolut.transfer.api.controller.TransactionController
 import com.revolut.transfer.api.resolveOutcome
 import com.revolut.transfer.api.resource.AccountDTO
+import com.revolut.transfer.api.resource.TransactionRequestDTO
 import com.revolut.transfer.util.Outcome
 import io.javalin.Javalin
 import io.javalin.http.BadRequestResponse
@@ -25,6 +27,16 @@ object Router {
         server.transactional(GET,"/accounts/:id") {
             val accountId = it.pathParam("id")
             AccountController.getAccount(accountId)
+        }
+
+        server.transactional(POST, "/transactions") {
+            val newTransaction = it.body<TransactionRequestDTO>()
+            TransactionController.createTransaction(newTransaction)
+        }
+
+        server.transactional(GET,"/transactions/:id") {
+            val transactionId = it.pathParam("id")
+            TransactionController.getTransaction(transactionId)
         }
 
     }

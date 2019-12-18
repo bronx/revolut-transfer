@@ -1,6 +1,7 @@
 package com.revolut.transfer.config
 
 import com.revolut.transfer.model.Accounts
+import com.revolut.transfer.model.Transactions
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
@@ -24,7 +25,7 @@ object DBConfig {
 
         database = Database.connect(dataSource)
 
-        transaction { SchemaUtils.create(Accounts) }
+        transaction { SchemaUtils.create(Accounts, Transactions) }
 
 
 

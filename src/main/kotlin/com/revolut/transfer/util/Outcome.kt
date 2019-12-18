@@ -7,9 +7,11 @@ package com.revolut.transfer.util
 sealed class Outcome<T> {
     class Created<T>(val value: T): Outcome<T>()
     class Success<T>(val value: T): Outcome<T>()
-    class Error<T>(val category: ErrorCategory): Outcome<T>()
+    class Error<T>(val category: ErrorCategory, val message: String): Outcome<T>()
 }
 
 enum class ErrorCategory {
-    DATA_NOT_FOUND
+    DATA_NOT_FOUND,
+    INVALID_DATA,
+    UNKNOWN_ERROR
 }
