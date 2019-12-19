@@ -18,4 +18,5 @@ class Account(id: EntityID<String>): Entity<String>(id) {
 
     var name by Accounts.name
     var balance by Accounts.balance
+    var taxId by Accounts.taxId
 }

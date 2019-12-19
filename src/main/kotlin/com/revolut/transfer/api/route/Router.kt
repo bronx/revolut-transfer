@@ -61,7 +61,7 @@ private fun wrappedInTransaction(action: (Context) -> Outcome<out Any>) = { ctx:
             addLogger(StdOutSqlLogger)
             resolveOutcome(action(ctx), ctx)
         } catch (e: BadRequestResponse) { // Javalin will throw this exception if bad json is send in payload
-            ctx.status(400).json(APIError("Invalid dataQWE!")).let { Unit }
+            ctx.status(400).json(APIError("Invalid data!")).let { Unit }
         }
     }
 }

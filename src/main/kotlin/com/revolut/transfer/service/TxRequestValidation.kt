@@ -21,6 +21,10 @@ internal fun validate(newTransaction: TransactionRequestDTO, accountService: IAc
         // When transaction type == TRANSFER, origin account is mandatory!
         val origin = newTransaction.origin ?: return Outcome.Error(ErrorCategory.INVALID_DATA, "Origin not provided")
 
+        // Destination should be different than the origin
+        if (newTransaction.destination == origin)
+            return Outcome.Error(ErrorCategory.INVALID_DATA, "Origin and destination accounts are the same!")
+
         // Checks if destination account exists
         when(val outcome = accountService.get(origin)) {
             is Outcome.Error  -> return Outcome.Error(ErrorCategory.INVALID_DATA, outcome.message)
