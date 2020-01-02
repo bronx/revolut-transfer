@@ -49,14 +49,9 @@ class AccountIT: BaseIT() {
     @Test
     fun `Should successfully get an existent account`() {
 
-        transaction {
-            Accounts.insert {
-                it[id] = EntityID("foo", Accounts)
-                it[name] = "Jane"
-            }
-        }
+        val (accountId, _) = createAccount()
 
-        val response = given().get("/accounts/foo")
+        val response = given().get("/accounts/$accountId")
 
         response.then().statusCode(200)
         val accountDTO = response.`as`(AccountDTO::class.java)

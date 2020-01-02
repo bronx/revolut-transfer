@@ -13,7 +13,7 @@ fun resolveOutcome(outcome: Outcome<out Any>, context: Context) {
         is Outcome.Success -> context.json(outcome.value)
         is Outcome.Error -> when(outcome.category) {
             DATA_NOT_FOUND -> context.status(404).json(APIError(outcome.message))
-            INVALID_DATA -> context.status(400).json(APIError(outcome.message))
+            INVALID_DATA, INCONSISTENT_STATE -> context.status(400).json(APIError(outcome.message))
             UNKNOWN_ERROR -> context.status(500).json(APIError(outcome.message))
         }
     }

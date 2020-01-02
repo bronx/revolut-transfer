@@ -13,5 +13,6 @@ sealed class Outcome<T> {
 enum class ErrorCategory {
     DATA_NOT_FOUND,
     INVALID_DATA,
+    INCONSISTENT_STATE,
     UNKNOWN_ERROR
 }

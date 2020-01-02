@@ -3,10 +3,13 @@ package com.revolut.transfer.service
 import com.revolut.transfer.api.resource.TransactionDTO
 import com.revolut.transfer.api.resource.TransactionRequestDTO
 import com.revolut.transfer.api.resource.TransactionRequestType
+import com.revolut.transfer.model.Account
 import com.revolut.transfer.model.Accounts
 import com.revolut.transfer.model.TransactionType
 import com.revolut.transfer.model.Transactions
+import com.revolut.transfer.util.ErrorCategory
 import com.revolut.transfer.util.ErrorCategory.DATA_NOT_FOUND
+import com.revolut.transfer.util.ErrorCategory.INCONSISTENT_STATE
 import com.revolut.transfer.util.Outcome
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.insert
@@ -25,10 +28,18 @@ object TransactionService: ITransactionService {
 
     override fun createTransaction(newTransaction: TransactionRequestDTO): Outcome<TransactionDTO> {
 
-        val validation = validate(newTransaction, accountService)
-        if (validation is Outcome.Error) {
-            return Outcome.Error(validation.category, validation.message)
+        val accounts = accountService.getAccounts(newTransaction.destination, newTransaction.origin)
+        val (destination, origin) = when(accounts) {
+            // It's only error when destination account is not found!
+            is Outcome.Error -> return Outcome.Error(ErrorCategory.INVALID_DATA, accounts.message)
+            is Outcome.Success -> accounts.value
+            else -> return Outcome.Error(INCONSISTENT_STATE, "Unexpected outcome!")
         }
+
+        val validationResult = validate(newTransaction, origin)
+        if (validationResult is Outcome.Error)
+            return Outcome.Error(validationResult.category, validationResult.message)
+
 
         val transaction = Transactions.insert {
             it[id] = EntityID(UUID.randomUUID().toString(), Transactions)
@@ -41,7 +52,7 @@ object TransactionService: ITransactionService {
             it[timestamp] = DateTime.now()
         }
 
-        val balancesOutcome = updateBalances(newTransaction)
+        val balancesOutcome = updateBalances(destination, origin, newTransaction)
         if (balancesOutcome is Outcome.Error) {
             return Outcome.Error(balancesOutcome.category, balancesOutcome.message)
         }
@@ -62,12 +73,15 @@ object TransactionService: ITransactionService {
      * Potential race condition!!
      * Luckily, we have all the transactions registered!
      */
-    private fun updateBalances(newTransaction: TransactionRequestDTO) = when(newTransaction.type) {
-        TransactionRequestType.DEBIT -> accountService.removeFromBalance(newTransaction.destination, newTransaction.amount)
-        TransactionRequestType.DEPOSIT -> accountService.addToBalance(newTransaction.destination, newTransaction.amount)
-        TransactionRequestType.TRANSFER -> {
-            accountService.removeFromBalance(newTransaction.origin ?: error("Invalid state"), newTransaction.amount)
-            accountService.addToBalance(newTransaction.destination, newTransaction.amount)
+    private fun updateBalances(destination: Account, origin: Account?, newTransaction: TransactionRequestDTO): Outcome<Unit> {
+
+        return when(newTransaction.type) {
+            TransactionRequestType.DEBIT -> accountService.removeFromBalance(destination, newTransaction.amount)
+            TransactionRequestType.DEPOSIT -> accountService.addToBalance(destination, newTransaction.amount)
+            TransactionRequestType.TRANSFER -> {
+                accountService.removeFromBalance(origin ?: error("Invalid state"), newTransaction.amount)
+                accountService.addToBalance(destination, newTransaction.amount)
+            }
         }
     }
 

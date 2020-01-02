@@ -1,6 +1,6 @@
 # Revolut Transfer Service
 
-Built with Kotlin ❤️, Javalin & Jetbrains Exposed 
+Built with ❤️, Kotlin, Javalin & Jetbrains Exposed 
 
 
 ## Account
@@ -99,6 +99,7 @@ The following integration tests were implemented:
 | Should successfully create a debit transaction()                                                                 | Transaction | Passed |
 | Should successfully create a deposit transaction()                                                               | Transaction | Passed |
 | Should successfully create a transfer()                                                                          | Transaction | Passed |
+| Should successfully run concurrent transactions on same account                                                  | Transaction | Passed |
 
 
 ## Build

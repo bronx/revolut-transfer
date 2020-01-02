@@ -16,6 +16,7 @@ repositories {
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
     implementation("org.jetbrains.exposed:exposed:0.17.7")
 	implementation("io.javalin:javalin:3.6.0")
 	implementation("com.fasterxml.jackson.core:jackson-databind:2.10.0")

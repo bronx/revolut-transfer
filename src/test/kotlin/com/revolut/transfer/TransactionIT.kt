@@ -5,15 +5,11 @@ import com.revolut.transfer.api.resource.TransactionDTO
 import com.revolut.transfer.api.resource.TransactionRequestDTO
 import com.revolut.transfer.api.resource.TransactionRequestType
 import com.revolut.transfer.model.Account
-import com.revolut.transfer.model.Accounts
 import com.revolut.transfer.model.Transaction
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.util.*
 import kotlin.random.Random
 
 class TransactionIT: BaseIT() {
@@ -44,7 +40,7 @@ class TransactionIT: BaseIT() {
             destination = "foo",
             origin = origin
         )
-        expectError(transactionRequest, 400, "Account foo not found!")
+        expectError(transactionRequest, 400, "Destination account (foo) not found!")
     }
 
     @Test
@@ -160,16 +156,6 @@ class TransactionIT: BaseIT() {
         assertThat(transaction.id).isNotBlank()
 
         return transaction
-    }
-
-    private fun createAccount(aBalance: Int = Random.nextInt(0, 10_000)) = transaction {
-        val theBalance = aBalance.toBigDecimal()
-        val id = Accounts.insert {
-            it[id] = EntityID(UUID.randomUUID().toString(), Accounts)
-            it[name] = setOf("Mary", "Julia", "Irene", "Janice").random()
-            it[balance] = theBalance
-        } get Accounts.id
-        id.value to theBalance
     }
 
     private fun checkFromDB(

@@ -4,6 +4,7 @@ import com.revolut.transfer.api.resource.AccountDTO
 import com.revolut.transfer.model.Account
 import com.revolut.transfer.model.Accounts
 import com.revolut.transfer.util.ErrorCategory.DATA_NOT_FOUND
+import com.revolut.transfer.util.ErrorCategory.INCONSISTENT_STATE
 import com.revolut.transfer.util.Outcome
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.insert
@@ -14,13 +15,26 @@ import java.util.*
 interface IAccountService {
     fun createAccount(newAccount: AccountDTO): Outcome<AccountDTO>
     fun get(accountId: String): Outcome<AccountDTO>
-    fun addToBalance(accountId: String, amount: BigDecimal): Outcome<Unit>
-    fun removeFromBalance(accountId: String, amount: BigDecimal): Outcome<Unit>
+    fun addToBalance(account: Account, amount: BigDecimal): Outcome<Unit>
+    fun removeFromBalance(account: Account, amount: BigDecimal): Outcome<Unit>
+    fun getAccounts(destinationAccountId: String, originAccountId: String? = null): Outcome<Pair<Account, Account?>>
 }
 
 private val MINUS_ONE = BigDecimal("-1")
 
 object AccountService: IAccountService {
+
+    override fun getAccounts(destinationAccountId: String, originAccountId: String?): Outcome<Pair<Account, Account?>> {
+        val (destinationAccount, originAccount) = Account.find {
+            Accounts.id.inList(originAccountId?.let { listOf(it, destinationAccountId) } ?: listOf(destinationAccountId) )
+        }.let { result ->
+            result.firstOrNull() { it.id.value == destinationAccountId } to result.firstOrNull { it.id.value == originAccountId }
+        }
+
+        return destinationAccount?.let {
+            Outcome.Success(it to originAccount)
+        } ?: Outcome.Error(INCONSISTENT_STATE, "Destination account ($destinationAccountId) not found!")
+    }
 
     override fun createAccount(newAccount: AccountDTO): Outcome<AccountDTO> {
         val account = Accounts.insert {
@@ -50,13 +64,10 @@ object AccountService: IAccountService {
         )
     }
 
-    override fun addToBalance(accountId: String, amount: BigDecimal): Outcome<Unit> {
-        Account.findById(accountId)?.apply {
-            this.balance = this.balance + amount
-        }
+    override fun addToBalance(account: Account, amount: BigDecimal): Outcome<Unit> {
+        account.balance = account.balance + amount
         return Outcome.Success(Unit)
     }
 
-    override fun removeFromBalance(accountId: String, amount: BigDecimal): Outcome<Unit> = addToBalance(accountId, (amount * MINUS_ONE))
-
+    override fun removeFromBalance(account: Account, amount: BigDecimal): Outcome<Unit> = addToBalance(account, (amount * MINUS_ONE))
 }
